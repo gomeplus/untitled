@@ -6,14 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 import java.util.Random;
 
-@RestController
+@Controller
+@CrossOrigin("*")
 public class RandomfoodController {
 
     private Logger log = LoggerFactory.getLogger(RandomfoodController.class);
@@ -21,12 +21,19 @@ public class RandomfoodController {
     @Autowired
     private FoodOrRestaurantRepository repository;
 
+    @RequestMapping("/randomfood")
+    public String randomfood() {
+        return "index.html";
+    }
+
     @RequestMapping("/randomfood/put")
+    @ResponseBody
     public FoodOrRestaurant add(@RequestParam(value = "name") String name, @RequestParam(value = "note", required = false) String note) {
         return repository.save(new FoodOrRestaurant(name, note));
     }
 
     @RequestMapping("/randomfood/get")
+    @ResponseBody
     public FoodOrRestaurant get(@RequestParam("name") String name) {
         Optional opt = repository.findById(name);
         if (opt.isPresent()) {
@@ -38,6 +45,7 @@ public class RandomfoodController {
     }
 
     @RequestMapping("/randomfood/del")
+    @ResponseBody
     public String del(@RequestParam("name") String name) {
         try {
             repository.deleteById(name);
@@ -48,9 +56,18 @@ public class RandomfoodController {
     }
 
     @RequestMapping("/randomfood/random")
+    @ResponseBody
     public FoodOrRestaurant random() {
+        int random = Math.abs(new Random().nextInt());
+        int count = (int) repository.count();
+
+        if(count == 0) {
+            return null;
+        }
+
         return repository.
-                findAll(PageRequest.of((new Random().nextInt() % (int) repository.count()), 1)).
-                getContent().get(0);
+                findAll(PageRequest.of(random % count, 1)).
+                getContent().
+                get(0);
     }
 }
